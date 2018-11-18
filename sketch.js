@@ -1,102 +1,116 @@
-var backgroundColor = [27, 38, 40];
-var radius = 200;
-var menuRadius = 50;
-var triangleRadius = menuRadius;
-var circRadius = menuRadius;
-var squareRadius = menuRadius;
+const BACKGROUNDCOLOR = [27, 38, 40];
+const MENURADIUS = 50;
 
-// Arrays used in menu for shapes.
-var circleArray = [];
-var triangleArray = [];
-var squareArray = [];
+let circArray = [],
+    triangleArray = [],
+    squareArray = [],
+    bigTriangles = [],
+    bigCircles = [],
+    arrangeArray = [];
 
-// Arrays used in the "WATCH" state. 
-var bigTriangles = [];
-var bigCircles = [];
+let hoverNum = 10,
+    bigNum = 1,
+    numCircles = 20;
 
-// Array for keeping track of places shapes in "ARRANGE" state.
-var arrangeArray = [];
+let inMenu = true,
+    menu1Pressed = false,
+    menu2Pressed = false,
+    trianglePressed = false,
+    circlePressed = false,
+    squarePressed = false,
+    inArrange = false,
+    inWatchTriangle = false,
+    inWatchCircle = false,
+    inWatchSquare = false,
+    inArrangeTriangle = false,
+    inArrangeCircle = false,
+    inArrangeSquare = false;
 
-// Truth values used throughout for keeping track of menu states, program states, etc.
-var inMenu = true;
-var menu1Pressed = false;
-var menu2Pressed = false;
-var trianglePressed = false;
-var circlePressed = false;
-var squarePressed = false;
-var inArrange = false;
-var inWatchTriangle = false;
-var inWatchCircle = false;
-var inWatchSquare = false;
-var inArrangeTriangle = false;
-var inArrangeCircle = false;
-var inArrangeSquare = false;
-
-var mouseWheelValue;
-var font;
+var font,
+    g,
+    d;
 
 function preload() {
   font = loadFont('FreeSans.otf');
 }
 
+/**
+ * Setup canvas, colors, and needed objects.
+ *
+ * Set the size of the canvas, colors, and stroke. Also, instantiate objects, such as, the
+ * the shapes for the menu, shapes for the arrange and watch options, and menu headings.
+ * These are placed in their initial positions here.
+ */
 function setup() {
   cnv = createCanvas(800, 800);
 
   cnv.mouseWheel(changeSize);
-  mouseWheelValue = 100;
+  g = 100;
+  d = 100;
 
-  background(backgroundColor);
+  background(BACKGROUNDCOLOR);
   stroke(255, 255, 255, 15);
   smooth();
 
-  // Create shape objects used in menu.
-  var menuShapeBuffer = 100;
-  menuTriangle = new Triangle(width / 4 - 20, height / 2 + menuShapeBuffer, menuRadius, true);
-  menuCircle = new Circle(width / 2, height / 2 + menuShapeBuffer, menuRadius, true);
-  menuSquare = new Square(3 * width / 4 + 20, height / 2 + menuShapeBuffer, menuRadius, true);
-
-  // Create triangle shape array used in "ARRANGE" state.
-  for (var i = 0; i < 5; i++) {
-    bigTriangles.push(new Triangle(width / 2, height / 2, width / 2, false));
-  }
-
-  // Create circle shape array used in "ARRANGE" state.
-  for (var j = 0; j < 20; j++) {
-    bigCircles.push(new Circle(width / 2, height / 2, width / 2, false));
-  }
-
-  // Create menu item objects.
-  var menuItemBuffer = 415;
+  // Create the shapes for the title menu.
+  let menuShapeBuffer = 100;
+  menuTriangle = new Triangle(width / 4 - 20, height / 2 + menuShapeBuffer, MENURADIUS, true);
+  menuCircle = new Circle(width / 2, height / 2 + menuShapeBuffer, MENURADIUS, true);
+  menuSquare = new Square(3 * width / 4 + 20, height / 2 + menuShapeBuffer, MENURADIUS, true);
+  
+  // Create the menu item headers.
+  let menuItemBuffer = 415;
   menuItem1 = new MenuItem('ARRANGE', width * 0.07, height * 0.35, 65);
   menuItem2 = new MenuItem('WATCH', width * 0.1 + menuItemBuffer, height * 0.35, 65);
   exitItem = new MenuItem('EXIT', width - 140, height - 30, 50);
+
+  for (i = 0; i < 5; i++) {
+  	bigTriangles.push(new Triangle(width / 2, height / 2, width / 2, false));
+  }
+  
+  for (j = 0; j < numCircles; j++) {
+  	bigCircles.push(new Circle(width / 2, height / 2, width / 2, false));
+  }
+
+  bigCircle = new Circle(width / 2, height / 2, width / 2, false);
+  bigSquare = new Square(width / 2, height / 2, width / 2, false);
+}
+
+function mouseWheel() {
+  g += 10;
 }
 
 function resetMouseWheel() {
-  mouseWheelValue = 100;
+	g = 100;
+  d = 100;
 }
 
 function changeSize(event) {
   if (event.deltaY > 0) {
-    mouseWheelValue += 10;
-  } else {
-    if (mouseWheelValue > 0) {
-      mouseWheelValue = mouseWheelValue - 10;
-    }
+    d += 10;
+  } else if (d > 0) {
+    d -= 10;
   }
 }
 
 function keyPressed() {
-  if (keyCode == UP_ARROW) {
-    mouseWheelValue += 10;
+	if (keyCode == UP_ARROW) {
+    d += 10;
   } else if (keyCode == DOWN_ARROW && d > 0) {
-    mouseWheelValue -= 10;
+    d -= 10;
   }
 }
 
+/**
+ * Draw to the canvas.
+ *
+ * Denpending on where the user is within the program, draw the appropriate items to the
+ * canvas. There are three main sequences to draw: the title menu, the arrange program, 
+ * and the watch proggram.
+ */
 function draw() {
   if (inArrangeTriangle || inArrangeCircle || inArrangeSquare) {
-    arrange();
+     arrange();
   } else if (inWatchTriangle) {
     drawBigTriangle();
   } else if (inWatchCircle) {
@@ -108,33 +122,44 @@ function draw() {
   }
 }
 
+/**
+ * Check for mouse press and take the appropriate action.
+ *
+ * The main way the user interacts is through mouse presses. Depending on where on the screen,
+ * and on what has already been selected, this press can initiate various actions.
+ */
 function mousePressed() {
+
+  // If the user is in the arrange subprogram, then they are either trying to exit and return to
+  // the main menu, or place a shape. The shape placed is dependent on which arrange subpgrogram
+  // they are in: triangle, circle, or square.
   if (inArrangeTriangle) {
     if (exitItem.mouseHover()) {
       resetMenuTruths();
       resetMouseWheel();
       arrangeArray = [];
     } else {
-      arrangeArray.push(new Triangle(mouseX, mouseY, mouseWheelValue, false));
+    	arrangeArray.push(new Triangle(mouseX, mouseY, d, false));
     }
   } else if (inArrangeCircle) {
     if (exitItem.mouseHover()) {
       resetMenuTruths();
-      resetMouseWheel();
+       resetMouseWheel();
       arrangeArray = [];
     } else {
-      arrangeArray.push(new Circle(mouseX, mouseY, mouseWheelValue, false));
+    	arrangeArray.push(new Circle(mouseX, mouseY, d, false));
     }
   } else if (inArrangeSquare) {
     if (exitItem.mouseHover()) {
       resetMenuTruths();
-      resetMouseWheel();
+       resetMouseWheel();
       arrangeArray = [];
     } else {
-      arrangeArray.push(new Square(mouseX, mouseY, mouseWheelValue, false));
+    	arrangeArray.push(new Square(mouseX, mouseY, d, false));
     }
   }
-
+  
+  // If the user is in the watch subprogram and they click exit, then exit to the main menu.
   if (inWatchTriangle) {
     if (exitItem.mouseHover()) {
       resetMenuTruths();
@@ -147,9 +172,12 @@ function mousePressed() {
     if (exitItem.mouseHover()) {
       resetMenuTruths();
     }
-  }
+  }   
 
 
+  // The user is not within either subprogram and thus, are at the main menu. In order to select
+  // a subprogram, they must choose both a subprogram and a shape. Only one option from each can
+  // be selected at a time.
   if (menuItem1.mouseHover() && inMenu) {
     menu1Pressed = !menu1Pressed;
     menu2Pressed = false;
@@ -174,40 +202,48 @@ function mousePressed() {
     squarePressed = !squarePressed;
 
   }
-
+  
+  // If both a subprogram and a shape have been chosen, then set the appropriate boolean
+  // variables so that those can be loaded and drawn to the canvas.
   if (menu1Pressed && inMenu) {
     if (trianglePressed) {
-      background(backgroundColor);
+      background(BACKGROUNDCOLOR);
       inArrangeTriangle = true;
       inMenu = false;
     } else if (circlePressed) {
-      background(backgroundColor);
+      background(BACKGROUNDCOLOR);
       inArrangeCircle = true;
       inMenu = false;
     } else if (squarePressed) {
-      background(backgroundColor);
+      background(BACKGROUNDCOLOR);
       inArrangeSquare = true;
       inMenu = false;
     }
   } else if (menu2Pressed && inMenu) {
     if (trianglePressed) {
-      background(backgroundColor);
+      background(BACKGROUNDCOLOR);
       inWatchTriangle = true;
       inMenu = false;
     } else if (circlePressed) {
-      background(backgroundColor);
+      background(BACKGROUNDCOLOR);
       inWatchCircle = true;
       inMenu = false;
     } else if (squarePressed) {
-      background(backgroundColor);
+      background(BACKGROUNDCOLOR);
       inWatchSquare = true;
       inMenu = false;
     }
   }
 }
 
+/**
+ * Reset all of the boolean variables and background color.
+ *
+ * This resets all boolean variables and background color. This is done when the user exits a
+ * subprogram and returns to the main menu.
+ */
 function resetMenuTruths() {
-  background(backgroundColor)
+  background(BACKGROUNDCOLOR)
   inWatchTriangle = false;
   inWatchCircle = false;
   inWatchSquare = false;
@@ -244,7 +280,7 @@ function menu() {
       menuItem2.display();
     }
   }
-
+  
   if (trianglePressed) {
     resetCircleHover();
     resetSquareHover();
@@ -269,179 +305,182 @@ function menu() {
   } else {
     if (menuTriangle.mouseHover()) {
       menuTriangle.cover();
-      drawTriangleHover();
+    	drawTriangleHover();
     } else {
       resetTriangleHover();
-      menuTriangle.draw();
+    	menuTriangle.draw();
     }
-
+    
     if (menuCircle.mouseHover()) {
       menuCircle.cover();
-      drawCircleHover();
+    	drawCircleHover();
     } else {
       resetCircleHover();
-      menuCircle.draw();
+    	menuCircle.draw();
     }
-
+    
     if (menuSquare.mouseHover()) {
       menuSquare.cover();
-      drawSquareHover();
+    	drawSquareHover();
     } else {
       resetSquareHover();
-      menuSquare.draw();
+    	menuSquare.draw();
     }
   }
 }
 
 function arrange() {
-  for (var i = 0; i < arrangeArray.length; i++) {
+  for (let i = 0; i < arrangeArray.length; i++) {
     arrangeArray[i].draw();
   }
-
+  
   exitItem.display(false, false);
 }
 
 function drawBigTriangle() {
-  for (var j = 0; j < bigTriangles.length; j++) {
+  for(let j = 0; j < bigTriangles.length; j++) {
     push();
-    var cT = bigTriangles[j];
-    cT.setCenter(-width / 4, -height / 4);
-    cT.setRadius((width / 2) * sin(frameCount * 0.01));
-    push();
-    translate(width / 2,
-    height / 2);
-    rotate(frameCount * 1000);
-    cT.draw();
+    
+  	for (let i = 0; i < bigNum; i++) {
+      let cT = bigTriangles[j];
+      cT.setCenter(-width / 4, -height / 4);
+      cT.setRadius((width / 2) * sin(frameCount * 0.01));
+      push();
+      translate(width / 2 , 
+                height / 2);
+      rotate(frameCount * 1000);
+      cT.draw();
+    }
+    
     pop();
   }
-
+  
   exitItem.display(false, false);
 }
 
 function drawBigCirc() {
-
-  var circle = bigCircles[0];
-  var baseRadius = 50;
-  var stepRadius = 50;
-
-  var numRows = 1;
-  for (var i = 0; i < 10; i++) {
+  
+  let circle = bigCircles[0];
+  let baseRadius = 50;
+  let stepRadius = 50;
+  
+  let numRows = 1;
+  for (let i = 0; i < 10; i++) {
     push();
     translate(width / 2, height / 2);
     rotate(frameCount);
     circle.setCenter(-(width / 4) + width / 4 * cos(frameCount * 0.1), height / 2 * sin(frameCount * 0.01));
     circle.setRadius(baseRadius + stepRadius * sin(frameCount * 0.01));
     circle.draw();
-
+    
     circle.setCenter(-(width / 4) + width / 4 * cos(frameCount * 0.1), -height / 2 * sin(frameCount * 0.01));
     circle.setRadius(baseRadius + stepRadius * sin(frameCount * 0.01));
     circle.draw();
-
+    
     circle.setCenter(width / 4 * cos(frameCount * 0.1), height / 2 * sin(frameCount * 0.01));
     circle.setRadius(baseRadius + stepRadius * sin(frameCount * 0.01));
     circle.draw();
-
+    
     circle.setCenter(width / 4 * cos(frameCount * 0.1), -height / 2 * sin(frameCount * 0.01));
     circle.setRadius(baseRadius + stepRadius * sin(frameCount * 0.01));
     circle.draw();
-
+    
     circle.setCenter((width / 4) + width / 4 * cos(frameCount * 0.1), height / 2 * sin(frameCount * 0.01));
     circle.setRadius(baseRadius + stepRadius * sin(frameCount * 0.01));
     circle.draw();
-
+    
     circle.setCenter((width / 4) + width / 4 * cos(frameCount * 0.1), -height / 2 * sin(frameCount * 0.01));
     circle.setRadius(baseRadius + stepRadius * sin(frameCount * 0.01));
     circle.draw();
     pop();
   }
-
+  
   exitItem.display(false, false);
 }
 
 function drawBigSquare() {
-  bigSquare.setCenter(0, 0);
-  bigSquare.setRadius(width / 4 + (width / 4) * sin(frameCount * 0.01));
-  push();
-  translate(width / 2, height / 2);
-  rotate(frameCount * 0.01);
-  bigSquare.draw();
-  pop();
-
+  for (let i = 0; i < bigNum; i++) {
+    bigSquare.setCenter(i * (width / bigNum), -i * (height / bigNum));
+    bigSquare.setRadius(width / 4 + (width / 4) * sin(frameCount * 0.01));
+    push();
+    translate(width / 2, height / 2);
+    rotate(frameCount * 0.01);
+    bigSquare.draw();
+    pop();
+  }
+  
   exitItem.display(false, false);
 }
 
 function drawCircleHover() {
-  var hoverNum = 10;
-  var angle;
-  var xpos;
-  var ypos;
-  var r;
+  let angle;
+  let xpos;
+  let ypos;
+  let r;
 
-  for (var i = 0; i < 1; i++) {
+  for (let i = 0; i < 1; i++) {
     angle = random(0, 2 * PI);
     r = floor(random(0, 2 * menuCircle.getRadius()));
     xpos = menuCircle.getCenterX() + r * cos(angle);
     ypos = menuCircle.getCenterY() + r * sin(angle);
 
-    if (circleArray.length == hoverNum) {
-      var removed = circleArray.shift();
+    if (circArray.length == hoverNum) {
+      let removed = circArray.shift();
       removed.cover();
     }
 
-    circleArray.push(new Circle(xpos, ypos, menuCircle.getRadius(), true))
+    circArray.push(new Circle(xpos, ypos, menuCircle.getRadius(), true))
   }
 
-  for (var j = 0; j < circleArray.length; j++) {
-    circleArray[j].draw();
+  for (let j = 0; j < circArray.length; j++) {
+    circArray[j].draw();
   }
 }
 
 function drawSquareHover() {
-  var hoverNum = 10;
-  var xpos;
-  var ypos;
+  let xpos;
+  let ypos;
 
-  var x = menuSquare.getCenterX();
-  var y = menuSquare.getCenterY();
-  var radius = menuSquare.getRadius();
+  let x = menuSquare.getCenterX();
+  let y = menuSquare.getCenterY();
+  let radius = menuSquare.getRadius();
 
-  for (var i = 0; i < 1; i++) {
+  for (let i = 0; i < 1; i++) {
     xpos = floor(random(x - radius, x + radius));
     ypos = floor(random(y - radius, y + radius));
 
     if (squareArray.length == hoverNum) {
-      var removed = squareArray.shift();
+      let removed = squareArray.shift();
       removed.cover();
     }
 
-    squareArray.push(new Square(xpos, ypos, menuRadius, true));
+    squareArray.push(new Square(xpos, ypos, MENURADIUS, true));
   }
 
-  for (var j = 0; j < squareArray.length; j++) {
+  for (let j = 0; j < squareArray.length; j++) {
     squareArray[j].draw();
   }
 }
 
 function drawTriangleHover() {
-  var x = menuTriangle.getCenterX();
-  var y = menuTriangle.getCenterY();
-  var radius = menuTriangle.getRadius();
-  var hoverNum = 10;
+  let x = menuTriangle.getCenterX();
+  let y = menuTriangle.getCenterY();
+  let radius = menuTriangle.getRadius();
 
-  var ax = x;
-  var ay = y - radius;
-  var bx = x + radius;
-  var by = y + radius;
-  var cx = x - radius;
-  var cy = y + radius;
-  var angle;
-  var xpos;
-  var ypos;
-  var u1;
-  var u2;
-  var r;
+  let ax = x;
+  let ay = y - radius;
+  let bx = x + radius;
+  let by = y + radius;
+  let cx = x - radius;
+  let cy = y + radius;
+  let angle;
+  let xpos;
+  let ypos;
+  let u1;
+  let u2;
+  let r;
 
-  for (var i = 0; i < 5; i++) {
+  for (let i = 0; i < 5; i++) {
     u1 = random();
     u2 = random();
 
@@ -449,43 +488,43 @@ function drawTriangleHover() {
     ypos = (1 - sqrt(u1)) * ay + (sqrt(u1) * (1 - u2)) * by + (sqrt(u1) * u2) * cy
 
     if (triangleArray.length == hoverNum) {
-      var removed = triangleArray.shift();
+      let removed = triangleArray.shift();
       removed.cover();
     }
 
     triangleArray.push(new Triangle(xpos, ypos, radius));
   }
 
-  for (var j = 0; j < triangleArray.length; j++) {
+  for (let j = 0; j < triangleArray.length; j++) {
     triangleArray[j].draw();
   }
 }
 
 function resetTriangleHover() {
-  for (var k = 0; k < triangleArray.length; k++) {
-    triangleArray[k].cover();
+  for (let k = 0; k < triangleArray.length; k++) {
+		triangleArray[k].cover();
   }
-
+  
   for (k = 0; k < squareArray.length; k++) {
     triangleArray.shift();
   }
 }
 
 function resetCircleHover() {
-  for (var k = 0; k < circleArray.length; k++) {
-    circleArray[k].cover();
+  for (let k = 0; k < circArray.length; k++) {
+		circArray[k].cover();
   }
-
-  for (k = 0; k < circleArray.length; k++) {
-    circleArray.shift();
+  
+  for (k = 0; k < circArray.length; k++) {
+    circArray.shift();
   }
 }
 
 function resetSquareHover() {
-  for (var k = 0; k < squareArray.length; k++) {
+  for (let k = 0; k < squareArray.length; k++) {
     squareArray[k].cover()
   }
-
+  
   for (k = 0; k < squareArray.length; k++) {
     squareArray.shift();
   }
@@ -494,13 +533,13 @@ function resetSquareHover() {
 function triPoint(x1, y1, x2, y2, x3, y3, px, py) {
 
   // get the area of the triangle
-  var areaOrig = abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1));
+  let areaOrig = abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1));
 
   // get the area of 3 triangles made between the point
   // and the corners of the triangle
-  var area1 = abs((x1 - px) * (y2 - py) - (x2 - px) * (y1 - py));
-  var area2 = abs((x2 - px) * (y3 - py) - (x3 - px) * (y2 - py));
-  var area3 = abs((x3 - px) * (y1 - py) - (x1 - px) * (y3 - py));
+  let area1 = abs((x1 - px) * (y2 - py) - (x2 - px) * (y1 - py));
+  let area2 = abs((x2 - px) * (y3 - py) - (x3 - px) * (y2 - py));
+  let area3 = abs((x3 - px) * (y1 - py) - (x1 - px) * (y3 - py));
 
   // if the sum of the three areas equals the original,
   // we're inside the triangle!
@@ -547,15 +586,15 @@ function MenuItem(word, x, y, fs = 10) {
   }
 
   this.display = function(wiggle = false, cover = true) {
-    var threshold = 20;
-    var p1;
-    var p2;
-    var points;
+    let threshold = 20;
+    let p1;
+    let p2;
+    let points;
 
     if (wiggle) {
-      var randomX = random(-this.wiggleX, this.wiggleX)
-      var randomY = random(-this.wiggleY, this.wiggleY)
-      var randomFS = random(-7, 7);
+      let randomX = random(-this.wiggleX, this.wiggleX)
+      let randomY = random(-this.wiggleY, this.wiggleY)
+      let randomFS = random(-7, 7);
 
       points = font.textToPoints(this.title, this.centerX + randomX,
         this.centerY + randomY, this.fontsize + randomFS, {
@@ -574,15 +613,15 @@ function MenuItem(word, x, y, fs = 10) {
         this.centerY, this.fontsize);
     }
 
-    var letterCount = 0;
-    var letterArray = [];
-    var currentArray = [];
-    for (var k = 0; k < points.length - 1; k++) {
+    let letterCount = 0;
+    let letterArray = [];
+    let currentArray = [];
+    for (let k = 0; k < points.length - 1; k++) {
       p1 = points[k];
       p2 = points[k + 1];
 
       if (dist(p1.x, p1.y, p2.x, p2.y) > threshold) {
-        var newArray = currentArray.slice();
+        let newArray = currentArray.slice();
         letterArray.push(newArray);
         currentArray = [];
       } else {
@@ -593,28 +632,28 @@ function MenuItem(word, x, y, fs = 10) {
     letterArray.push(currentArray);
 
     if (cover) {
-      fill(backgroundColor);
-      rect(this.bbox.x - 80, this.bbox.y - 80, this.bbox.w + 160, this.bbox.h + 160);
+    	fill(BACKGROUNDCOLOR);
+    	rect(this.bbox.x - 80, this.bbox.y - 80, this.bbox.w + 160, this.bbox.h + 160);
     } else {
-      for (var letter = 0; letter < letterArray.length; letter++) {
-        for (var i = 0; i < letterArray[letter].length - 1; i++) {
-          for (var j = 0; j < 2; j++) {
-            var currentLetter = letterArray[letter];
+      for (let letter = 0; letter < letterArray.length; letter++) {
+        for (let i = 0; i < letterArray[letter].length - 1; i++) {
+          for (let j = 0; j < 2; j++) {
+            let currentLetter = letterArray[letter];
             p1 = currentLetter[floor(random(currentLetter.length - 1))];
             p2 = currentLetter[floor(random(currentLetter.length - 1))];
 
-            stroke(backgroundColor, 5);
+            stroke(BACKGROUNDCOLOR, 5);
 
             line(p1.x, p1.y, p2.x, p2.y);
           }
         }
-      }
+    	}
     }
 
-    for (var letter = 0; letter < letterArray.length; letter++) {
-      for (var i = 0; i < letterArray[letter].length - 1; i++) {
-        for (var j = 0; j < 2; j++) {
-          var currentLetter = letterArray[letter];
+    for (let letter = 0; letter < letterArray.length; letter++) {
+      for (let i = 0; i < letterArray[letter].length - 1; i++) {
+        for (let j = 0; j < 2; j++) {
+          let currentLetter = letterArray[letter];
           p1 = currentLetter[floor(random(currentLetter.length - 1))];
           p2 = currentLetter[floor(random(currentLetter.length - 1))];
 
@@ -667,7 +706,7 @@ function Triangle(x = width / 2, y = height / 2, r = 10, ct = true) {
   }
 
   this.cover = function() {
-    var buffer = 5;
+    let buffer = 5;
     fill(this.backgroundColor);
     triangle(this.centerX,
       this.centerY - (this.radius + buffer),
@@ -678,23 +717,23 @@ function Triangle(x = width / 2, y = height / 2, r = 10, ct = true) {
   }
 
   this.mouseHover = function() {
-    var x1 = this.centerX - this.radius;
-    var y1 = this.centerY + this.radius;
-    var x2 = this.centerX + this.radius;
-    var y2 = this.centerY + this.radius;
-    var x3 = this.centerX;
-    var y3 = this.centerY - this.radius;
+    let x1 = this.centerX - this.radius;
+    let y1 = this.centerY + this.radius;
+    let x2 = this.centerX + this.radius;
+    let y2 = this.centerY + this.radius;
+    let x3 = this.centerX;
+    let y3 = this.centerY - this.radius;
 
     return triPoint(x1, y1, x2, y2, x3, y3, mouseX, mouseY);
   }
 
   this.draw = function() {
-    for (var i = 0; i < this.numLines; i++) {
-      var xpos1 = this.centerX;
-      var ypos1 = this.centerY - this.radius;
+    for (let i = 0; i < this.numLines; i++) {
+      let xpos1 = this.centerX;
+      let ypos1 = this.centerY - this.radius;
 
-      var xpos2 = floor(random(this.centerX - this.radius, this.centerX + this.radius));
-      var ypos2 = this.centerY + this.radius;
+      let xpos2 = floor(random(this.centerX - this.radius, this.centerX + this.radius));
+      let ypos2 = this.centerY + this.radius;
 
       // Set the color for the lines.
       stroke(this.baseColorVal + this.colorValStep * sin(frameCount * 0.01),
@@ -755,7 +794,7 @@ function Circle(x = width / 2, y = height / 2, r = 10, ct = true) {
   }
 
   this.cover = function() {
-    var buffer = 5;
+    let buffer = 5;
     fill(this.backgroundColor);
     ellipse(this.centerX, this.centerY, 2 * (this.radius + buffer));
   }
@@ -765,16 +804,16 @@ function Circle(x = width / 2, y = height / 2, r = 10, ct = true) {
   }
 
   this.draw = function() {
-    for (var i = 0; i < this.numLines; i++) {
+    for (let i = 0; i < this.numLines; i++) {
       // Find a random point on a circle at one end.
-      var angle1 = random(0, 2 * PI);
-      var xpos1 = this.centerX + this.radius * cos(angle1);
-      var ypos1 = this.centerY + this.radius * sin(angle1);
+      let angle1 = random(0, 2 * PI);
+      let xpos1 = this.centerX + this.radius * cos(angle1);
+      let ypos1 = this.centerY + this.radius * sin(angle1);
 
       // Find another random point on the circle.
-      var angle2 = random(0, 2 * PI);
-      var xpos2 = this.centerX + this.radius * cos(angle2);
-      var ypos2 = this.centerY + this.radius * sin(angle2);
+      let angle2 = random(0, 2 * PI);
+      let xpos2 = this.centerX + this.radius * cos(angle2);
+      let ypos2 = this.centerY + this.radius * sin(angle2);
 
       // Set the color for the lines.
       stroke(this.baseColorVal + this.colorValStep * sin(frameCount * 0.01),
@@ -839,7 +878,7 @@ function Square(x = width / 2, y = height / 2, r = 10, ct = true) {
   }
 
   this.cover = function() {
-    var buffer = 5;
+    let buffer = 5;
     fill(this.backgroundColor);
     rect(this.centerX - (this.radius + buffer),
       this.centerY - (this.radius + buffer),
@@ -855,12 +894,12 @@ function Square(x = width / 2, y = height / 2, r = 10, ct = true) {
   }
 
   this.draw = function() {
-    for (var i = 0; i < this.numLines; i++) {
-      var xpos1 = floor(random(this.centerX - this.radius, this.centerX + this.radius));
-      var ypos1 = this.centerY - this.radius;
+    for (let i = 0; i < this.numLines; i++) {
+      let xpos1 = floor(random(this.centerX - this.radius, this.centerX + this.radius));
+      let ypos1 = this.centerY - this.radius;
 
-      var xpos2 = xpos1;
-      var ypos2 = this.centerY + this.radius;
+      let xpos2 = xpos1;
+      let ypos2 = this.centerY + this.radius;
 
       // Set the color for the lines.
       stroke(this.baseColorVal + this.colorValStep * sin(frameCount * 0.01),
