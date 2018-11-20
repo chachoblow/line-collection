@@ -11,3 +11,6 @@ With any of these three shapes, you can then choose to either arrange them, or w
 
 Below is an image of the main menu. In the second image, the user is hovering over the circle shape. 
 
+![Main menu of the program](https://imgur.com/wMdM7YQ)
+![Main menu with mouse hovering](https://imgur.com/tlCB1bI)
+
