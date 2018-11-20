@@ -10,7 +10,7 @@ At the main menu you can decide between three different shapes:
 With any of these three shapes, you can then choose to either arrange them, or watch a pre-made animation. Below is an image of the main menu. In the second image, the user is hovering over the circle shape. 
 
 ![Main menu of the program](https://i.imgur.com/wMdM7YQ.png)
-![Main menu with mouse hovering](https://i.imgur.com/tlCB1bI.png))
+![Main menu with mouse hovering](https://i.imgur.com/tlCB1bI.png)
 
 If a user wishes to arrange, they can either use the mouse wheel or the up/down keys to change the size of the shape. Then, they can click anywhere within the program's canvas to place a shape. Below is an image of this being done with the circle shape.
 
