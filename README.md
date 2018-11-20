@@ -13,4 +13,5 @@ Below is an image of the main menu. In the second image, the user is hovering ov
 
 ![Main menu of the program](https://imgur.com/wMdM7YQ)
 ![Main menu with mouse hovering](https://imgur.com/tlCB1bI)
+[Imgur](https://i.imgur.com/tlCB1bI.png)
 
