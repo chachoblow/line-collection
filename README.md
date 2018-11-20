@@ -1,5 +1,5 @@
 # line-collection
-Tool for arranging and watching various shapes made our of lines alone.
+Tool for arranging and watching various shapes made our of lines alone. If you wish to try it out, visit [this link](https://editor.p5js.org/chachoblow/full/H1Cb47__Q). Although it is intuitive to use, instructions can be found below.
 
 At the main menu you can decide between three different shapes: 
 
