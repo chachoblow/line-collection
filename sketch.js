@@ -1,17 +1,15 @@
 const BACKGROUNDCOLOR = [27, 38, 40];
 const MENURADIUS = 50;
 
+// Arrays for all hovering and arrange animations.
 let circArray = [],
     triangleArray = [],
     squareArray = [],
-    bigTriangles = [],
-    bigCircles = [],
+    watchTriangles = [],
+    watchCircles = [],
     arrangeArray = [];
 
-let hoverNum = 10,
-    bigNum = 1,
-    numCircles = 20;
-
+// Variables for keeping track of what has been pressed, and where the user is within the program.
 let inMenu = true,
     menu1Pressed = false,
     menu2Pressed = false,
@@ -26,9 +24,9 @@ let inMenu = true,
     inArrangeCircle = false,
     inArrangeSquare = false;
 
-var font,
-    g,
-    d;
+// Variables for keeping track of mouse wheel usage. The mouse wheel can be used to change the
+// size of the shapes in the Arrange subprogram.
+var font, g, d;
 
 function preload() {
   font = loadFont('FreeSans.otf');
@@ -65,11 +63,11 @@ function setup() {
   exitItem = new MenuItem('EXIT', width - 140, height - 30, 50);
 
   for (i = 0; i < 5; i++) {
-  	bigTriangles.push(new Triangle(width / 2, height / 2, width / 2, false));
+  	watchTriangles.push(new Triangle(width / 2, height / 2, width / 2, false));
   }
   
-  for (j = 0; j < numCircles; j++) {
-  	bigCircles.push(new Circle(width / 2, height / 2, width / 2, false));
+  for (j = 0; j < 20; j++) {
+  	watchCircles.push(new Circle(width / 2, height / 2, width / 2, false));
   }
 
   bigCircle = new Circle(width / 2, height / 2, width / 2, false);
@@ -112,11 +110,11 @@ function draw() {
   if (inArrangeTriangle || inArrangeCircle || inArrangeSquare) {
      arrange();
   } else if (inWatchTriangle) {
-    drawBigTriangle();
+    drawWatchTriangle();
   } else if (inWatchCircle) {
-    drawBigCirc();
+    drawWatchCirc();
   } else if (inWatchSquare) {
-    drawBigSquare();
+    drawWatchSquare();
   } else {
     menu();
   }
@@ -258,9 +256,19 @@ function resetMenuTruths() {
   squarePressed = false;
 }
 
+/**
+ * Display and logic of main menu.
+ *
+ * Controls what is displayed on the menu (depending on what the user has pressed and/or what
+ * they are currently hovering the mouse over. There are two main things a user can choose at 
+ * the main menu: the shape they want to use, and the way they want to use it (arrange or 
+ * watch).
+ */
 function menu() {
   noStroke();
 
+  // If the one of the two menu items have been pressed, have that item react (by shaking on 
+  // the canvas). Only one can be shaking at a time.
   if (menu1Pressed) {
     menuItem1.display(true);
     menuItem2.display();
@@ -281,6 +289,7 @@ function menu() {
     }
   }
   
+  // If the user presses one of the shapes, have that shape continue to shake.
   if (trianglePressed) {
     resetCircleHover();
     resetSquareHover();
@@ -303,6 +312,8 @@ function menu() {
     menuTriangle.draw();
     menuCircle.draw();
   } else {
+    
+    // If the user hovers over a shape, have the shape shake.
     if (menuTriangle.mouseHover()) {
       menuTriangle.cover();
     	drawTriangleHover();
@@ -329,6 +340,12 @@ function menu() {
   }
 }
 
+/**
+ * Draw all shapes in the arrange array.
+ *
+ * This function executes when the user has selected to arrange a shape. The arrange array
+ * contains shapes which have been added by the user through clicks on the screen.
+ */
 function arrange() {
   for (let i = 0; i < arrangeArray.length; i++) {
     arrangeArray[i].draw();
@@ -337,34 +354,38 @@ function arrange() {
   exitItem.display(false, false);
 }
 
-function drawBigTriangle() {
-  for(let j = 0; j < bigTriangles.length; j++) {
+/**
+ * Draw triangles to canvas.
+ *
+ * The user wishes to watch a display of triangles. This function displays this.
+ */
+function drawWatchTriangle() {
+  for(let j = 0; j < watchTriangles.length; j++) {
+    let cT = watchTriangles[j];
+    cT.setCenter(-width / 4, -height / 4);
+    cT.setRadius((width / 2) * sin(frameCount * 0.01));
+    
     push();
-    
-  	for (let i = 0; i < bigNum; i++) {
-      let cT = bigTriangles[j];
-      cT.setCenter(-width / 4, -height / 4);
-      cT.setRadius((width / 2) * sin(frameCount * 0.01));
-      push();
-      translate(width / 2 , 
-                height / 2);
-      rotate(frameCount * 1000);
-      cT.draw();
-    }
-    
+    translate(width / 2, height / 2);
+    rotate(frameCount * 1000);
+    cT.draw();
     pop();
   }
   
   exitItem.display(false, false);
 }
 
-function drawBigCirc() {
+/**
+ * Draw circles to canvas.
+ *
+ * The user wishes to watch a display of circles. This function displays this.
+ */
+function drawWatchCirc() {
+  let circle = watchCircles[0],
+      baseRadius = 50,
+      stepRadius = 50,
+      numRows = 1;
   
-  let circle = bigCircles[0];
-  let baseRadius = 50;
-  let stepRadius = 50;
-  
-  let numRows = 1;
   for (let i = 0; i < 10; i++) {
     push();
     translate(width / 2, height / 2);
@@ -398,118 +419,160 @@ function drawBigCirc() {
   exitItem.display(false, false);
 }
 
-function drawBigSquare() {
-  for (let i = 0; i < bigNum; i++) {
-    bigSquare.setCenter(i * (width / bigNum), -i * (height / bigNum));
-    bigSquare.setRadius(width / 4 + (width / 4) * sin(frameCount * 0.01));
-    push();
-    translate(width / 2, height / 2);
-    rotate(frameCount * 0.01);
-    bigSquare.draw();
-    pop();
-  }
+/**
+ * Draw squares to canvas.
+ *
+ * The user wishes to watch a display of squares. This function displays this.
+ */
+function drawWatchSquare() {
+  bigSquare.setCenter(0, 0);
+  bigSquare.setRadius(width / 4 + (width / 4) * sin(frameCount * 0.01));
+  
+  push();
+  translate(width / 2, height / 2);
+  rotate(frameCount * 0.01);
+  bigSquare.draw();
+  pop();
   
   exitItem.display(false, false);
 }
 
+/**
+ * Draw the animation for when the user hovers over the circle shape.
+ *
+ * In the main menu, when the user hovers over the circle, it should animate so that
+ * a number of circles are drawn randomly around the cursor.
+ */
 function drawCircleHover() {
-  let angle;
-  let xpos;
-  let ypos;
-  let r;
+  let angle, xpos, ypos, r;
+  let hoverNum = 20;
 
-  for (let i = 0; i < 1; i++) {
-    angle = random(0, 2 * PI);
-    r = floor(random(0, 2 * menuCircle.getRadius()));
-    xpos = menuCircle.getCenterX() + r * cos(angle);
-    ypos = menuCircle.getCenterY() + r * sin(angle);
+  // Pick a random point within a circle around the cursor.
+  angle = random(0, 2 * PI);
+  r = floor(random(0, 2 * menuCircle.getRadius()));
+  xpos = menuCircle.getCenterX() + r * cos(angle);
+  ypos = menuCircle.getCenterY() + r * sin(angle);
 
-    if (circArray.length == hoverNum) {
-      let removed = circArray.shift();
-      removed.cover();
-    }
-
-    circArray.push(new Circle(xpos, ypos, menuCircle.getRadius(), true))
+  // Remove the oldest circle that has been displayed in the animation.
+  if (circArray.length == hoverNum) {
+    let removed = circArray.shift();
+    removed.cover();
   }
 
+  // Push a new circle to the array.
+  circArray.push(new Circle(xpos, ypos, menuCircle.getRadius(), true))
+
+  // Draw the random circles to the screen.
   for (let j = 0; j < circArray.length; j++) {
     circArray[j].draw();
   }
 }
 
+/**
+ * Draw the animation for when the user hovers over the square shape.
+ *
+ * In the main menu, when the user hovers over the square, it should animate so that
+ * a number of squares are drawn randomly around the cursor.
+ */
 function drawSquareHover() {
-  let xpos;
-  let ypos;
+  let xpos, ypos;
 
-  let x = menuSquare.getCenterX();
-  let y = menuSquare.getCenterY();
-  let radius = menuSquare.getRadius();
+  let hoverNum = 20,
+      x = menuSquare.getCenterX(),
+      y = menuSquare.getCenterY(),
+      radius = menuSquare.getRadius();
 
-  for (let i = 0; i < 1; i++) {
-    xpos = floor(random(x - radius, x + radius));
-    ypos = floor(random(y - radius, y + radius));
 
-    if (squareArray.length == hoverNum) {
-      let removed = squareArray.shift();
-      removed.cover();
-    }
+  // Pick a random location within a square around the cursor.
+  xpos = floor(random(x - radius, x + radius));
+  ypos = floor(random(y - radius, y + radius));
 
-    squareArray.push(new Square(xpos, ypos, MENURADIUS, true));
+  // Remove the oldest square that has been dispalyed in the animation.
+  if (squareArray.length == hoverNum) {
+    let removed = squareArray.shift();
+    removed.cover();
   }
 
+  // Push a new square to be displayed.
+  squareArray.push(new Square(xpos, ypos, MENURADIUS, true));
+
+
+  // Draw all the squares to the screen.
   for (let j = 0; j < squareArray.length; j++) {
     squareArray[j].draw();
   }
 }
 
+/**
+ * Draw the animation for when the user hovers over the triangle shape.
+ *
+ * In the main menu, when the user hovers over the triangle, it should animate so that
+ * a number of triangles are drawn randomly around the cursor.
+ */
 function drawTriangleHover() {
-  let x = menuTriangle.getCenterX();
-  let y = menuTriangle.getCenterY();
-  let radius = menuTriangle.getRadius();
+  let hoverNum = 20,
+      x = menuTriangle.getCenterX(),
+      y = menuTriangle.getCenterY(),
+      radius = menuTriangle.getRadius();
 
-  let ax = x;
-  let ay = y - radius;
-  let bx = x + radius;
-  let by = y + radius;
-  let cx = x - radius;
-  let cy = y + radius;
-  let angle;
-  let xpos;
-  let ypos;
-  let u1;
-  let u2;
-  let r;
+  // Variables used to make sure random point is within the area of a triangle.
+  let ax = x,
+      ay = y - radius,
+      bx = x + radius,
+      by = y + radius,
+      cx = x - radius,
+      cy = y + radius,
+      angle,
+      xpos,
+      ypos,
+      u1,
+      u2,
+      r;
 
-  for (let i = 0; i < 5; i++) {
-    u1 = random();
-    u2 = random();
+  u1 = random();
+  u2 = random();
 
-    xpos = (1 - sqrt(u1)) * ax + (sqrt(u1) * (1 - u2)) * bx + (sqrt(u1) * u2) * cx
-    ypos = (1 - sqrt(u1)) * ay + (sqrt(u1) * (1 - u2)) * by + (sqrt(u1) * u2) * cy
+  // Get a random position within the shape of a triangle.
+  xpos = (1 - sqrt(u1)) * ax + (sqrt(u1) * (1 - u2)) * bx + (sqrt(u1) * u2) * cx
+  ypos = (1 - sqrt(u1)) * ay + (sqrt(u1) * (1 - u2)) * by + (sqrt(u1) * u2) * cy
 
-    if (triangleArray.length == hoverNum) {
-      let removed = triangleArray.shift();
-      removed.cover();
-    }
-
-    triangleArray.push(new Triangle(xpos, ypos, radius));
+  // Remove the oldest triangle.
+  if (triangleArray.length == hoverNum) {
+    let removed = triangleArray.shift();
+    removed.cover();
   }
 
+  // Push a new triangle.
+  triangleArray.push(new Triangle(xpos, ypos, radius));
+
+  // Display the triangles for the hover animation.
   for (let j = 0; j < triangleArray.length; j++) {
     triangleArray[j].draw();
   }
 }
 
+/**
+ * Reset the triangle array used in the hover animation.
+ *
+ * Cover all of the triangles which are currently being displayed, and then clear the
+ * triangle array. 
+ */
 function resetTriangleHover() {
   for (let k = 0; k < triangleArray.length; k++) {
 		triangleArray[k].cover();
   }
   
-  for (k = 0; k < squareArray.length; k++) {
+  for (k = 0; k < triangleArray.length; k++) {
     triangleArray.shift();
   }
 }
 
+/**
+ * Reset the circle array used in the hover animation.
+ *
+ * Cover all of the circles which are currently being displayed, and then clear the
+ * circle array. 
+ */
 function resetCircleHover() {
   for (let k = 0; k < circArray.length; k++) {
 		circArray[k].cover();
@@ -520,6 +583,12 @@ function resetCircleHover() {
   }
 }
 
+/**
+ * Reset the square array used in the hover animation.
+ *
+ * Cover all of the squares which are currently being displayed, and then clear the
+ * square array. 
+ */
 function resetSquareHover() {
   for (let k = 0; k < squareArray.length; k++) {
     squareArray[k].cover()
@@ -530,25 +599,52 @@ function resetSquareHover() {
   }
 }
 
+/**
+ * Check if a point is within the area of a described triangle.
+ *
+ * If a point is within a described triangles, then the area of the total triangle is equal
+ * to the area of the sum of the triangles formed by the point and the corners of the triangle.
+ *
+ * @param {float} x1 x-coordinate of first point of triangle.
+ * @param {float} y1 y-coordinate of first point of triangle.
+ * @param {float} x2 x-coordinate of second point of triangle.
+ * @param {float} y2 y-coordinate of second point of triangle.
+ * @param {float} x3 x-coordinate of third point of triangle.
+ * @param {float} y3 y-coordinate of third point of triangle.
+ * @param {float} px x-coordinate of point to check.
+ * @param {float} py y-coordinate of point to check.
+ *
+ * @return {boolean} Whether the point is in the triangle or not.
+ */
 function triPoint(x1, y1, x2, y2, x3, y3, px, py) {
 
-  // get the area of the triangle
+  // Calculate the area of the triangle.
   let areaOrig = abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1));
 
-  // get the area of 3 triangles made between the point
-  // and the corners of the triangle
+  // Calculate the area of 3 triangles made between the point
+  // and the corners of the triangle.
   let area1 = abs((x1 - px) * (y2 - py) - (x2 - px) * (y1 - py));
   let area2 = abs((x2 - px) * (y3 - py) - (x3 - px) * (y2 - py));
   let area3 = abs((x3 - px) * (y1 - py) - (x1 - px) * (y3 - py));
 
-  // if the sum of the three areas equals the original,
-  // we're inside the triangle!
   if (area1 + area2 + area3 == areaOrig) {
     return true;
   }
   return false;
 }
 
+/**
+ * Menu item object displayed at main menu.
+ *
+ * An object used to display title and options at the menu. Can designate a word to be
+ * associated with the menu item, and then the object can be displayed in the style of the
+ * rest of the program.
+ *
+ * @param {string} word Word to be displayed.
+ * @param {float} x float x-coordinate for location of word on canvas.
+ * @param {float} y float y-coordinate for location of word on canvas.
+ * @param {integer} fs Font size for the word.
+ */
 function MenuItem(word, x, y, fs = 10) {
   this.centerX = x;
   this.centerY = y;
@@ -558,26 +654,51 @@ function MenuItem(word, x, y, fs = 10) {
   this.wiggleY = 7;
   this.baseColorVal = 100;
   this.colorValStep = 75;
-  this.bbox = font.textBounds(this.title, this.centerX,
-    this.centerY, this.fontsize);
+  this.bbox = font.textBounds(this.title, this.centerX, this.centerY, this.fontsize);
 
+	/**
+ 	 * Get the bounding box for the menu item.
+ 	 *
+ 	 * @return The boudning box for the menu item.
+ 	 */
   this.getBox = function() {
     return this.bbox;
   }
 
+  /**
+ 	 * Get center x-coordinate of the menu item.
+ 	 *
+ 	 * @return The center x-coordinate.
+ 	 */
   this.getCenterX = function() {
     return this.centerX;
   }
 
+  /**
+ 	 * Get center y-coordinate of the menu item.
+ 	 *
+ 	 * @return The center y-coordinate.
+ 	 */
   this.getCenterY = function() {
     return this.centerY;
   }
 
+  /**
+ 	 * Set the amount the menu item should wiggle when hovered.
+ 	 *
+ 	 * @param {float} x The maximum x-distance to wiggle.
+   * @param {float} y The maximum y-distance to wiggle.
+ 	 */
   this.setWiggle = function(x, y) {
     this.wiggleX = x;
     this.wiggleY = y;
   }
 
+  /**
+ 	 * Check if the mouse is hovering one the menu item.
+ 	 *
+ 	 * @return Whether the mouse is hovering over the item.
+ 	 */
   this.mouseHover = function() {
     return (mouseX > this.bbox.x &&
       mouseX < this.bbox.x + this.bbox.w &&
@@ -585,11 +706,18 @@ function MenuItem(word, x, y, fs = 10) {
       mouseY < this.bbox.y + this.bbox.h);
   }
 
+  /**
+ 	 * Display the menu item.
+   *
+   * Display the menu item to the canvas. This is done in the same style as the rest of the
+   * program, i.e., it is constructed out of lines. 
+ 	 *
+ 	 * @param {boolean} wiggle Whether the menu item should wiggle or not.
+   * @param {boolean} cover Whether to cover the menu item or not. 
+ 	 */
   this.display = function(wiggle = false, cover = true) {
     let threshold = 20;
-    let p1;
-    let p2;
-    let points;
+    let p1, p2, points;
 
     if (wiggle) {
       let randomX = random(-this.wiggleX, this.wiggleX)
@@ -670,6 +798,17 @@ function MenuItem(word, x, y, fs = 10) {
 
 }
 
+/**
+ * The triangle shape.
+ *
+ * This object is the triangle shape for the program. All drawing of triangles to the
+ * canvas use this object, but with varying sizes.
+ *
+ * @param {float} x x-coordinate for the triangle.
+ * @param {float} y y-coordinate for the triangle.
+ * @param {float} r Radius of the triangle.
+ * @param {boolean} ct Whether to cover past lines as triangle is drawn.
+ */
 function Triangle(x = width / 2, y = height / 2, r = 10, ct = true) {
   this.centerX = x;
   this.centerY = y;
@@ -680,31 +819,67 @@ function Triangle(x = width / 2, y = height / 2, r = 10, ct = true) {
   this.colorValStep = 75;
   this.backgroundColor = [27, 38, 40, 255];
 
+  /**
+   * Set the center of the triangle.
+   *
+   * @param {float} x x-coordinate of the center.
+   * @param {float} y y-coordinate of the center.
+   */
   this.setCenter = function(x, y) {
     this.centerX = x;
     this.centerY = y;
   }
 
+  /**
+   * Set the center of the triangle.
+   *
+   * @param {float} r Radius of the triangle.
+   */
   this.setRadius = function(r) {
     this.radius = r;
   }
 
+  /**
+   * Set whether the triangle should cover past lines drawn.
+   *
+   * @param {boolean} ct Whether past lines should be covered.
+   */
   this.setCoverTracks = function(ct) {
     this.coverTracks = ct;
   }
 
+  /**
+   * Get the center x-coordinate of the triangle.
+   *
+   * @return The x-coordinate of the center.
+   */
   this.getCenterX = function() {
     return this.centerX;
   }
 
+  /**
+   * Get the center y-coordinate of the triangle.
+   *
+   * @return The y-coordinate of the center.
+   */
   this.getCenterY = function() {
     return this.centerY;
   }
 
+  /**
+   * Get the radius of the triangle.
+   *
+   * @return The radius of the triangle.
+   */
   this.getRadius = function() {
     return this.radius;
   }
 
+  /**
+   * Cover the triangle.
+   *
+   * This covers all past lines of the triangle. The color is set to the background color.
+   */
   this.cover = function() {
     let buffer = 5;
     fill(this.backgroundColor);
@@ -716,6 +891,11 @@ function Triangle(x = width / 2, y = height / 2, r = 10, ct = true) {
       this.centerY + (this.radius + buffer));
   }
 
+  /**
+   * Check whether the mouse is hovering within the triangle.
+   *
+   * @return {boolean} Whether the mouse is within the triangle.
+   */
   this.mouseHover = function() {
     let x1 = this.centerX - this.radius;
     let y1 = this.centerY + this.radius;
@@ -727,6 +907,11 @@ function Triangle(x = width / 2, y = height / 2, r = 10, ct = true) {
     return triPoint(x1, y1, x2, y2, x3, y3, mouseX, mouseY);
   }
 
+  /**
+   * Draw the triangle to the canvas.
+   * 
+   * Draw this triangle object to the canvas. Also cover tracks if that is set to true.
+   */
   this.draw = function() {
     for (let i = 0; i < this.numLines; i++) {
       let xpos1 = this.centerX;
@@ -758,6 +943,17 @@ function Triangle(x = width / 2, y = height / 2, r = 10, ct = true) {
   }
 }
 
+/**
+ * The circle shape.
+ *
+ * This object is the circle shape for the program. All drawing of circles to the
+ * canvas use this object, but with varying sizes.
+ *
+ * @param {float} x x-coordinate for the circle.
+ * @param {float} y y-coordinate for the circle.
+ * @param {float} r Radius of the circle.
+ * @param {boolean} ct Whether to cover past lines as circle is drawn.
+ */
 function Circle(x = width / 2, y = height / 2, r = 10, ct = true) {
   this.centerX = x;
   this.centerY = y;
@@ -768,41 +964,87 @@ function Circle(x = width / 2, y = height / 2, r = 10, ct = true) {
   this.colorValStep = 75;
   this.backgroundColor = [27, 38, 40, 255];
 
+  /**
+   * Set the center of the circle.
+   *
+   * @param {float} x x-coordinate of the center.
+   * @param {float} y y-coordinate of the center.
+   */
   this.setCenter = function(x, y) {
     this.centerX = x;
     this.centerY = y;
   }
 
+  /**
+   * Set the radius of the circle.
+   *
+   * @param {float} r The radius of the circle.
+   */
   this.setRadius = function(r) {
     this.radius = r;
   }
 
+  /**
+   * Set whether to cover past lines drawn.
+   *
+   * @param {boolean} ct Whether to cover past lines or not.
+   */
   this.setCoverTracks = function(ct) {
     this.coverTracks = ct;
   }
 
+  /**
+   * Get the x-coordinate of the center.
+   *
+   * @return {float} The x-coordinate of the center.
+   */
   this.getCenterX = function() {
     return this.centerX;
   }
 
+  /**
+   * Get the y-coordinate of the center.
+   *
+   * @return {float} The y-coordinate of the center.
+   */
   this.getCenterY = function() {
     return this.centerY;
   }
 
+  /**
+   * Get the radius of the circle.
+   *
+   * @return {float} The radius of the circle.
+   */
   this.getRadius = function() {
     return this.radius;
   }
 
+  /**
+   * Cover the circle.
+   *
+   * Covers all past lines drawn for the circle. Replaces with the background color.
+   */
   this.cover = function() {
     let buffer = 5;
     fill(this.backgroundColor);
     ellipse(this.centerX, this.centerY, 2 * (this.radius + buffer));
   }
 
+  /**
+   * Check whether the mouse is hovering over the circle.
+   *
+   * @return {boolean} Whether the mouse is over the circle.
+   */
   this.mouseHover = function() {
     return dist(mouseX, mouseY, this.centerX, this.centerY) < this.radius;
   }
 
+  /**
+   * Draw the circle.
+   *
+   * Draw the circle to the canvas. If past lines are to be covered, do that as well.
+   */
   this.draw = function() {
     for (let i = 0; i < this.numLines; i++) {
       // Find a random point on a circle at one end.
@@ -842,6 +1084,17 @@ function Circle(x = width / 2, y = height / 2, r = 10, ct = true) {
   }
 }
 
+/**
+ * The square shape.
+ *
+ * This object is the square shape for the program. All drawing of squares to the
+ * canvas use this object, but with varying sizes.
+ *
+ * @param {float} x x-coordinate for the square.
+ * @param {float} y y-coordinate for the square.
+ * @param {float} r Radius of the square.
+ * @param {boolean} ct Whether to cover past lines as square is drawn.
+ */
 function Square(x = width / 2, y = height / 2, r = 10, ct = true) {
   this.centerX = x;
   this.centerY = y;
@@ -852,31 +1105,68 @@ function Square(x = width / 2, y = height / 2, r = 10, ct = true) {
   this.colorValStep = 75;
   this.backgroundColor = [27, 38, 40, 255];
 
+  /**
+   * Set the center of the square.
+   *
+   * @param {float} x x-coordinate of the square.
+   * @param {float} y y-coordinate of the square.
+   */
   this.setCenter = function(x, y) {
     this.centerX = x;
     this.centerY = y;
   }
 
+  /**
+   * Set the radius of the square.
+   *
+   * @param {float} The radius of the square.
+   */
   this.setRadius = function(r) {
     this.radius = r;
   }
 
+  /**
+   * Set whether to cover past lines of the square.
+   *
+   * @param {boolean} ct Whether to cover past lines drawn.
+   */
   this.setCoverTracks = function(ct) {
     this.coverTracks = ct;
   }
 
+  /**
+   * Get the x-coordinate of the center of the square.
+   *
+   * @return {float} The x-coordinate of the center.
+   */
   this.getCenterX = function() {
     return this.centerX;
   }
 
+  /**
+   * Get the y-coordinate of the center of the square.
+   *
+   * @return {float} The y-coordinate of the center.
+   */
   this.getCenterY = function() {
     return this.centerY;
   }
 
+  /**
+   * Get the radius of the square.
+   *
+   * @return {float} The radius.
+   */
   this.getRadius = function() {
     return this.radius;
   }
 
+  /**
+   * Cover the square.
+   *
+   * Cover all past lines drawn for the square. They are covered with the color of the
+   * background.
+   */
   this.cover = function() {
     let buffer = 5;
     fill(this.backgroundColor);
@@ -886,6 +1176,11 @@ function Square(x = width / 2, y = height / 2, r = 10, ct = true) {
       2 * (this.radius + buffer));
   }
 
+  /**
+   * Check whether the mouse is hovering over the square.
+   *
+   * @return {boolean} Whether the mouse is over the square.
+   */
   this.mouseHover = function() {
     return (mouseX < this.centerX + this.radius &&
       mouseX > this.centerX - this.radius &&
@@ -893,6 +1188,11 @@ function Square(x = width / 2, y = height / 2, r = 10, ct = true) {
       mouseY < this.centerY + this.radius);
   }
 
+  /**
+   * Draw the square to the canvas.
+   * 
+   * Draw the square to the canvas and cover past lines if that coverTracks is set to true.
+   */
   this.draw = function() {
     for (let i = 0; i < this.numLines; i++) {
       let xpos1 = floor(random(this.centerX - this.radius, this.centerX + this.radius));
